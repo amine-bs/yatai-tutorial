@@ -32,7 +32,7 @@ def train(train_loader, device="cpu"):
     # set hyperparameters
     lr = 0.001
     weight_decay = 0.0005
-    epoch = 20
+    epoch = 1
     # initialize models
     model = models.ResNet(class_num=class_num)
     model = model.to(device)
