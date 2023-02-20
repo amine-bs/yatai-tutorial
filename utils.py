@@ -23,7 +23,7 @@ def load_image(key, bucket="mbenxsalha"):
 
 
 def make_dataset(root="diffusion/pizza-not-pizza"):
-    s3 = boto3.client('s3',endpoint_url='https://minio.lab.sspcloud.fr/')
+    s3 = boto3.client('s3', endpoint_url='https://minio.lab.sspcloud.fr/')
     data = []
 
     pizza_root = os.path.join(root, "pizza")
@@ -32,11 +32,11 @@ def make_dataset(root="diffusion/pizza-not-pizza"):
         if is_image_file(key):
             data.append((key, 1))
 
-        not_pizza_root = os.path.join(root, "not_pizza")
-        for img in s3.list_objects(Bucket="mbenxsalha", Prefix=not_pizza_root)["Contents"]:
-            key = img["Key"]
-            if is_image_file(key):
-                data.append((key, 0))
+    not_pizza_root = os.path.join(root, "not_pizza")
+    for img in s3.list_objects(Bucket="mbenxsalha", Prefix=not_pizza_root)["Contents"]:
+        key = img["Key"]
+        if is_image_file(key):
+            data.append((key, 0))
     return data
 
 

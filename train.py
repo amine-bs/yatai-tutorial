@@ -9,8 +9,6 @@ import bentoml
 from tqdm import tqdm
 from utils import DatasetGenerator
 
-batch_size = 64
-data_root = "diffusion/pizza-not-pizza"
 ce_loss = nn.CrossEntropyLoss()
 
 
@@ -22,13 +20,13 @@ def test_model(model, test_loader, device="cpu"):
             img = img.to(device)
             img_label = img_label.to(device)
             predictions = model(img)
-            correct += (torch.argmax(predictions, dim=1)==img_label).sum().item()
+            correct += (torch.argmax(predictions, dim=1) == img_label).sum().item()
             num_predictions += predictions.shape[0]
             pb.update(1)
     return correct, num_predictions
 
 
-def train(dataset, device="cpu"):
+def train(train_loader, device="cpu"):
 
     class_num = 2
     # set hyperparameters
@@ -36,14 +34,13 @@ def train(dataset, device="cpu"):
     weight_decay = 0.0005
     epoch = 20
     # initialize models
-    resnet = models.ResNet(class_num=class_num)
-    resnet = resnet.to(device)
+    model = models.ResNet(class_num=class_num)
+    model = model.to(device)
 
     # define optimizers
-    opt_resnet = optim.SGD(resnet.parameters(), lr=lr, momentum=0.9, weight_decay=weight_decay)
+    opt_model = optim.SGD(model.parameters(), lr=lr, momentum=0.9, weight_decay=weight_decay)
     # train
-    loss_resnet = []
-    resnet.train()
+    model.train()
     torch.set_grad_enabled(True)
 
     for epo in range(1, epoch+1):
@@ -51,25 +48,31 @@ def train(dataset, device="cpu"):
         print("Epoch {}/{} \n".format(epo, epoch))
         with tqdm(total=len(train_loader), desc="Train") as pb:
             for batch_num, (img, img_label) in enumerate(train_loader):
-                opt_resnet.zero_grad()
+                opt_model.zero_grad()
                 img = img.to(device)
                 img_label = img_label.to(device)
-                outputs = resnet(img)
-                correct_resnet += (torch.argmax(outputs, dim=1)==img_label).sum().item()
+                outputs = model(img)
+                correct_resnet += (torch.argmax(outputs, dim=1) == img_label).sum().item()
                 loss = ce_loss(outputs, img_label)
                 loss.backward()
-                loss_resnet.append(loss)
-                opt_resnet.step()
+                opt_model.step()
                 pb.update(1)
-
+    return model
 
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description="BentoML PyTorch")
     parser.add_argument(
-        "--cuda", action="store_true", default=False, help="enable CUDA training"
+        "--cuda", action="store_true", default=True, help="enable CUDA training"
     )
-
+    parser.add_argument(
+        "--model-name",
+        type=str,
+        default="pytorch",
+        help="name for saved the model",
+    )
+    batch_size = 64
+    data_root = "diffusion/pizza-not-pizza"
     args = parser.parse_args()
     use_cuda = args.cuda and torch.cuda.is_available()
 
