@@ -1,0 +1,4 @@
+torch
+torchvision
+boto3
+bentoml>=1.0.0
