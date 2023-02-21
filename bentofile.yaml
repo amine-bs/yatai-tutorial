@@ -1,13 +1,12 @@
 service: "service:svc"
 description: "file: ./README.md"
 labels:
-  owner: bentoml-team
+  owner: onyxia
   stage: demo
 include:
 - "*.py"
 exclude:
-- "tests/"
-- "locustfile.py"
+- "tutorial.ipynb"
 python:
   packages:
     - scikit-learn

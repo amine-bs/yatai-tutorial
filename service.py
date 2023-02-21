@@ -5,6 +5,8 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 from PIL.Image import Image as PILImage
+import torch.nn.functional as F
+import torchvision.transforms.functional as TF
 
 import bentoml
 from bentoml.io import Image
@@ -13,38 +15,22 @@ from bentoml.io import NumpyNdarray
 if TYPE_CHECKING:
     from numpy.typing import NDArray
 
-resnet_runner = bentoml.pytorch.get("pytorch_resnet").to_runner()
+model_runner = bentoml.pytorch.get("pytorch").to_runner()
 
-svc = bentoml.Service(name="pytorch_mnist_demo", runners=[resnet_runner])
+svc = bentoml.Service(name="pytorch_demo", runners=[model_runner])
 
 
 def to_numpy(tensor):
     return tensor.detach().cpu().numpy()
 
 
-@svc.api(
-    input=NumpyNdarray(dtype="float32", enforce_dtype=True),
-    output=NumpyNdarray(dtype="int64"),
-)
-async def predict_ndarray(inp: NDArray[t.Any]) -> NDArray[t.Any]:
-    assert inp.shape == (28, 28)
-    # We are using greyscale image and our PyTorch model expect one
-    # extra channel dimension. Then we will also add one batch
-    # dimension
-    inp = np.expand_dims(inp, (0, 1))
-    output_tensor = await resnet_runner.async_run(inp)
-    return to_numpy(output_tensor)
-
-
 @svc.api(input=Image(), output=NumpyNdarray(dtype="int64"))
-async def predict_image(f: PILImage) -> NDArray[t.Any]:
+def predict_image(f: PILImage) -> NDArray[t.Any]:
     assert isinstance(f, PILImage)
-    arr = np.array(f) / 255.0
-    assert arr.shape == (28, 28)
+    img = TF.to_tensor(input)
+    img = TF.normalize(img, [0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
+    img = img.unsqueeze(0)
 
-    # We are using greyscale image and our PyTorch model expect one
-    # extra channel dimension. Then we will also add one batch
-    # dimension
-    arr = np.expand_dims(arr, (0, 1)).astype("float32")
-    output_tensor = await resnet_runner.async_run(arr)
+    output_tensor = model_runner.async_run(img)
+    output_tensor = F.softmax(output_tensor, dim=1)
     return to_numpy(output_tensor)
