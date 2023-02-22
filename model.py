@@ -1,7 +1,7 @@
 import torch.nn as nn
 import torch
 from torchvision import models
-
+import torch.nn.functional as F
 
 class ResNet(nn.Module):
 
@@ -23,5 +23,5 @@ class ResNet(nn.Module):
         self.eval()
         with torch.no_grad():
             raw_output = self.model(inp)
-            _, pred = torch.max(raw_output, 1)
+            _, pred = F.softmax(raw_output, dim=1)
             return pred
