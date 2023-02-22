@@ -25,12 +25,11 @@ def to_numpy(tensor):
 
 
 @svc.api(input=Image(), output=NumpyNdarray(dtype="int64"))
-def predict_image(f: PILImage) -> NDArray[t.Any]:
+async def predict_image(f: PILImage) -> NDArray[t.Any]:
     assert isinstance(f, PILImage)
     img = TF.to_tensor(input)
     img = TF.normalize(img, [0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
     img = img.unsqueeze(0)
 
-    output_tensor = model_runner.async_run(img)
-    output_tensor = F.softmax(output_tensor, dim=1)
+    output_tensor = await model_runner.async_run(img)
     return to_numpy(output_tensor)
