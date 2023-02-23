@@ -10,5 +10,4 @@ exclude:
 python:
   packages:
     - scikit-learn
-    - torch
-    - Pillow
+    - bentoml
